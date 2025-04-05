@@ -1,101 +1,86 @@
-import Image from "next/image";
+"use client"
+
+import { useState } from "react";
+import AppHeader from "./components/AppHeader";
+import Editor from "./components/Editor";
+import Sidebar from "./components/Sidebar";
+import StatusBar from "./components/StatusBar";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentDocument, setCurrentDocument] = useState({
+    id: "1",
+    title: "Project Proposal: Real-Time Collaborative Text Editor",
+    content: "<p>This document outlines our proposal for developing a real-time collaborative text editing platform that will allow multiple users to work on documents simultaneously.</p><h2>Project Overview</h2><p>The goal of this project is to create a seamless collaborative editing experience that rivals existing solutions while adding innovative features that address common pain points in collaborative writing.</p>"
+  });
+  
+  const [documents, setDocuments] = useState([
+    { id: "1", title: "Project Proposal", isActive: true },
+    { id: "2", title: "Meeting Notes", isActive: false },
+    { id: "3", title: "Research Analysis", isActive: false }
+  ]);
+  
+  const [sharedDocuments, setSharedDocuments] = useState([
+    { id: "4", title: "Team Roadmap", isActive: false },
+    { id: "5", title: "Product Specs", isActive: false }
+  ]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleSave = (content: string) => {
+    console.log("Saving content:", content);
+    // Implement save logic here
+  };
+
+  const handleDocumentSelect = (id: string) => {
+    // Update active document
+    const updatedDocs = documents.map(doc => ({
+      ...doc,
+      isActive: doc.id === id
+    }));
+    setDocuments(updatedDocs);
+    
+    // Update shared docs (deactivate all)
+    const updatedShared = sharedDocuments.map(doc => ({
+      ...doc,
+      isActive: doc.id === id
+    }));
+    setSharedDocuments(updatedShared);
+    
+    // Find the selected document and set it as current
+    const selected = [...documents, ...sharedDocuments].find(doc => doc.id === id);
+    if (selected) {
+      setCurrentDocument({
+        ...currentDocument,
+        id: selected.id,
+        title: selected.title
+      });
+    }
+  };
+
+  return (
+    <div className="app-container flex flex-col h-screen w-screen">
+      <AppHeader />
+      
+      <div className="main-content flex flex-1 overflow-hidden">
+        {!isFullscreen && (
+          <Sidebar 
+            documents={documents} 
+            sharedDocuments={sharedDocuments}
+            onDocumentSelect={handleDocumentSelect}
+          />
+        )}
+        
+        <div className="editor-container flex flex-col flex-1">
+          <Editor 
+            initialContent={currentDocument.content}
+            title={currentDocument.title}
+            onSave={handleSave}
+            isFullscreen={isFullscreen}
+            setIsFullscreen={setIsFullscreen}
+          />
+          
+          <StatusBar />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
 }
