@@ -46,7 +46,7 @@ const TextEditor = () => {
         wrapper.innerHTML = "";
       }
     };
-  }, []);
+  }, [toolbar_options]);
 
   return (
     <>
