@@ -9,6 +9,7 @@ const TextEditor = ({ documentId }: { documentId: string }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [quill, setQuill] = useState<Quill | null>(null);
   const [saveStatus, setSaveStatus] = useState<"Saved" | "Saving..." | "Error">("Saved");
+  const [copyStatus, setCopyStatus] = useState<"Copy" | "Copied!">("Copy");
 
   useEffect(() => {
     const s = io("http://localhost:5173");
@@ -131,7 +132,6 @@ const TextEditor = ({ documentId }: { documentId: string }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Define styles for the save status indicator
   const saveStatusStyle = {
     position: 'fixed' as const,
     bottom: '10px',
@@ -148,11 +148,66 @@ const TextEditor = ({ documentId }: { documentId: string }) => {
     transition: 'all 0.3s'
   };
 
+  const documentIdContainerStyle = {
+    position: 'fixed' as const,
+    bottom: '10px',
+    left: '10px',
+    display: 'flex' as const,
+    alignItems: 'center' as const,
+    padding: '5px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    backgroundColor: '#f5f5f5',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+    maxWidth: '300px',
+    zIndex: 1000
+  };
+
+  const documentIdStyle = {
+    marginRight: '8px',
+    whiteSpace: 'nowrap' as const,
+    overflow: 'hidden' as const,
+    textOverflow: 'ellipsis' as const,
+    color: '#424242',
+    fontFamily: 'monospace',
+    maxWidth: '200px'
+  };
+
+  const copyButtonStyle = {
+    backgroundColor: copyStatus === 'Copy' ? '#e0e0e0' : '#a5d6a7',
+    color: copyStatus === 'Copy' ? '#424242' : '#1b5e20',
+    border: 'none',
+    padding: '3px 8px',
+    borderRadius: '3px',
+    cursor: 'pointer' as const,
+    fontSize: '11px',
+    fontWeight: 'bold',
+    transition: 'all 0.2s'
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(documentId).then(() => {
+      setCopyStatus("Copied!");
+      setTimeout(() => setCopyStatus("Copy"), 2000);
+    });
+  };
+
   return (
     <>
       <div className="container" ref={wrapperRef}></div>
       <div style={saveStatusStyle}>
         {saveStatus}
+      </div>
+      <div style={documentIdContainerStyle}>
+        <div style={documentIdStyle} title={documentId}>
+          ID: {documentId}
+        </div>
+        <button 
+          onClick={copyToClipboard} 
+          style={copyButtonStyle}
+        >
+          {copyStatus}
+        </button>
       </div>
     </>
   );
