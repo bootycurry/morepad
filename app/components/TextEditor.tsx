@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react"
 import "quill/dist/quill.snow.css"
 import Quill from "quill"
 import { io, type Socket } from "socket.io-client"
-import { motion, AnimatePresence } from "framer-motion"
-import { Check, Copy, AlertTriangle, Clock, Users, Share2, ArrowLeft } from "lucide-react"
+import { motion } from "framer-motion"
+import { Check, Copy, AlertTriangle, Clock, Share2, ArrowLeft, Users } from "lucide-react"
 import Link from "next/link"
 
 const TextEditor = ({ documentId }: { documentId: string }) => {
@@ -34,9 +34,14 @@ const TextEditor = ({ documentId }: { documentId: string }) => {
       quill.enable(true)
     })
 
-    // Simulate active users (in a real app, this would come from the server)
-    const randomUsers = Math.floor(Math.random() * 3) + 1
-    setActiveUsers(randomUsers)
+    // Listen for active users updates
+    socket.on("active-users-update", (count) => {
+      setActiveUsers(count)
+    })
+
+    return () => {
+      socket.off("active-users-update")
+    }
   }, [socket, quill, documentId])
 
   // Add auto-save functionality
@@ -146,8 +151,6 @@ const TextEditor = ({ documentId }: { documentId: string }) => {
     })
   }
 
-  
-
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
@@ -233,8 +236,6 @@ const TextEditor = ({ documentId }: { documentId: string }) => {
             )}
           </button>
         </div>
-
-        
       </div>
 
       {/* Editor Container */}

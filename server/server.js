@@ -32,14 +32,37 @@ const io = new Server(5173, {
   },
 });
 
-// Handle socket connections
+// Track active users per document
+const documentUsers = new Map();
+
+// Track which document each socket is viewing
+const socketDocuments = new Map();
+
 io.on("connection", socket => {
   console.log("New client connected");
   
   socket.on("get-document", async documentId => {
     console.log("Document requested:", documentId);
-    const document = await findOrCreateDocument(documentId);
+    
+    // Store the current document for this socket
+    socketDocuments.set(socket.id, documentId);
+    
     socket.join(documentId);
+
+    if (!documentUsers.has(documentId)) {
+      documentUsers.set(documentId, new Set());
+    }
+
+    documentUsers.get(documentId).add(socket.id);
+
+    const activeUsers = documentUsers.get(documentId).size;
+    console.log(`Active users in document ${documentId}: ${activeUsers}`);
+    
+    // Emit active users count to all clients in this document
+    io.to(documentId).emit("active-users-update", activeUsers);
+    
+    const document = await findOrCreateDocument(documentId);
+
     socket.emit("load-document", document.data);
 
     socket.on("send-changes", delta => {
@@ -57,9 +80,31 @@ io.on("connection", socket => {
       }
     });
   });
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected");
+    
+    const documentId = socketDocuments.get(socket.id);
+    
+    // Remove socket from socketDocuments map
+    socketDocuments.delete(socket.id);
+    
+    // Remove user from the document they were viewing
+    if (documentId && documentUsers.has(documentId)) {
+      documentUsers.get(documentId).delete(socket.id);
+      
+      const activeUsers = documentUsers.get(documentId).size;
+      console.log(`Active users in document ${documentId}: ${activeUsers}`);
+      
+      io.to(documentId).emit("active-users-update", activeUsers);
+      
+      if (documentUsers.get(documentId).size === 0) {
+        documentUsers.delete(documentId);
+      }
+    }
+  });
 });
 
-// Helper function to find or create a document
 async function findOrCreateDocument(id) {
   if (id == null) return null;
 
